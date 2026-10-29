@@ -361,7 +361,7 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
 
 <!-- BANNER: optional wide photo at images/banner.jpg (about 2400 × 900). Without it the banner is a dark CAD grid behind the wireframe. -->
 <header class="banner" id="banner">
-  <img src="images/banner.jpg" alt="">
+  <img src="images/banner.jpg" alt="" onerror="this.parentElement.classList.add('empty')">
   <div class="wrap banner-inner" id="top">
     <div>
       <!-- PORTRAIT: images/portrait.jpg (square; portrait-sm.jpg is a head-and-shoulders crop for the side rail circle) -->
@@ -735,7 +735,6 @@ gal.innerHTML = GALLERY.map(([src, cap, size], i) => `
   <a href="#builds" class="tile ${size}" data-g="${i}" role="button" aria-label="${esc(cap)}">${media(src, cap)}<span class="cap">${esc(cap)}</span></a>`).join("");
 watchImages(gal);
 if (!GALLERY.length) { document.getElementById("builds").remove(); document.querySelector('nav a[href="#builds"]')?.parentElement.remove(); }
-watchImages(document.getElementById("banner"));
 watchImages(document.getElementById("rail"));
 
 /* ---------- Car crash simulator ----------
