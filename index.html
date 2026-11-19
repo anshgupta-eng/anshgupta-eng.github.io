@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400&family=Orbitron:wght@700;900&display=swap">
 <style>
-/* Layout: CAD-grid banner with name left and live wireframe right. On scroll the wireframe docks in the right margin and a contact rail appears in the left margin. */
+/* Layout: photo banner with the name on the left. A route line in the left margin carries a rocket down the page as you scroll; a quick contact rail appears in the right margin once you pass the banner. */
 :root {
   --bg: #07080a;
   --surface: #0e1014;
@@ -25,6 +25,7 @@
   --fg: #eceef1;
   --mute: #868c96;
   --accent: #e8c25e;
+  --route: #4cc9ff;
   --f-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   color-scheme: dark;
@@ -38,8 +39,6 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--accent); outlin
 .wrap { max-width: 1080px; margin: 0 auto; }
 button { font: inherit; color: inherit; }
 
-/* Fixed wireframe layer: above the banner background, below all content */
-.wire { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; }
 main.wrap, .banner-inner { position: relative; z-index: 2; }
 
 /* Nav */
@@ -52,8 +51,8 @@ main.wrap, .banner-inner { position: relative; z-index: 2; }
 .nav ul a.pill { color: var(--bg); background: var(--fg); padding: 0.5rem 0.95rem; border-radius: 999px; font-weight: 600; }
 .nav ul a.pill:hover { background: var(--accent); }
 
-/* Contact rail (left margin, wide screens) */
-.rail { position: fixed; z-index: 5; top: 50%; left: max(16px, calc((100vw - 1080px) / 4 - 32px)); transform: translate(-8px, -50%); display: none; flex-direction: column; align-items: center; gap: 0.9rem; opacity: 0; visibility: hidden; transition: opacity .4s, transform .4s, visibility .4s; }
+/* Contact rail (right margin, wide screens) */
+.rail { position: fixed; z-index: 5; top: 50%; right: max(16px, calc((100vw - 1080px) / 4 - 32px)); transform: translate(8px, -50%); display: none; flex-direction: column; align-items: center; gap: 0.9rem; opacity: 0; visibility: hidden; transition: opacity .4s, transform .4s, visibility .4s; }
 .rail.show { opacity: 1; visibility: visible; transform: translate(0, -50%); }
 .rail::before, .rail::after { content: ""; width: 1px; height: 56px; background: var(--line); }
 .rail .pfp { width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--line); }
@@ -62,9 +61,30 @@ main.wrap, .banner-inner { position: relative; z-index: 2; }
 .rail-btn:hover, .rail-btn:focus-visible { color: var(--fg); border-color: rgba(255, 255, 255, 0.3); }
 .rail-btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
 .rail-btn svg { width: 18px; height: 18px; }
-.rail-btn .tip { position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 0.8rem; font-weight: 600; background: var(--fg); color: var(--bg); padding: 0.35rem 0.6rem; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.rail-btn .tip { position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 0.8rem; font-weight: 600; background: var(--fg); color: var(--bg); padding: 0.35rem 0.6rem; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .2s; }
 .rail-btn:hover .tip, .rail-btn:focus-visible .tip { opacity: 1; }
 @media (min-width: 1260px) { .rail { display: flex; } }
+
+/* Route: a line in the left margin with a station per section; the rocket rides it as you scroll */
+.route { position: fixed; z-index: 5; left: max(18px, calc((100vw - 1080px) / 4 - 48px)); top: 15vh; bottom: 12vh; width: 120px; display: none; }
+@media (min-width: 1340px) { .route { display: block; } }
+.route .track { position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--line); }
+.route .done { position: absolute; left: 11px; top: 0; width: 2px; height: 0; background: var(--route); }
+.route a { position: absolute; left: 0; display: flex; align-items: center; gap: 0.65rem; translate: 0 -50%; font-size: 0.82rem; font-weight: 500; color: var(--mute); transition: color .25s; }
+.route a::before { content: ""; width: 14px; height: 14px; margin-left: 5px; border: 2px solid rgba(255, 255, 255, 0.14); background: var(--bg); border-radius: 50%; transition: border-color .25s, background .25s; }
+.route a.passed { color: var(--fg); }
+.route a.passed::before { border-color: var(--route); background: var(--route); }
+.route a:hover { color: var(--route); }
+.route .end { position: absolute; left: 0; bottom: -2.2rem; font-size: 0.78rem; color: var(--mute); padding-left: 1.6rem; white-space: nowrap; }
+.route .end::before { content: ""; position: absolute; left: 7px; top: -1.35rem; height: 1.2rem; border-left: 2px dashed rgba(255, 255, 255, 0.14); }
+.rocket { position: absolute; left: 1px; top: 0; width: 22px; height: 44px; translate: 0 -50%; pointer-events: none; }
+.rocket .flame { transform-origin: 11px 34px; animation: burn .12s steps(2) infinite alternate; }
+@keyframes burn { to { transform: scaleY(1.35); } }
+/* Narrower screens: the route becomes a progress strip under the nav */
+.strip { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--line); }
+.strip i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--route); }
+@media (min-width: 1340px) { .strip { display: none; } }
+@media (prefers-reduced-motion: reduce) { .rocket .flame { animation: none; } }
 
 /* Media slot: shows the photo, or a calm placeholder naming what goes there */
 .media { position: relative; margin: 0; background: var(--surface); overflow: hidden; }
@@ -105,12 +125,6 @@ main.wrap, .banner-inner { position: relative; z-index: 2; }
 h1 { font-size: clamp(2.8rem, 7.5vw, 5rem); line-height: 1; font-weight: 700; letter-spacing: -0.04em; margin: 0 0 0.9rem; }
 .role { font-size: clamp(1.1rem, 2vw, 1.35rem); line-height: 1.45; font-weight: 500; letter-spacing: -0.01em; margin: 0; }
 /* Model controls: right edge lines up with the content column */
-.ctl { position: absolute; z-index: 3; right: max(24px, calc((100% - 1080px) / 2)); bottom: 2.5rem; display: flex; align-items: center; gap: 0.9rem; }
-.fig { margin: 0; min-width: 9.5rem; font: 400 0.72rem/1.45 var(--f-mono); color: var(--mute); text-align: center; letter-spacing: 0.04em; text-transform: uppercase; }
-.ctl-btn { all: unset; box-sizing: border-box; cursor: pointer; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; color: var(--mute); transition: color .2s, border-color .2s; }
-.ctl-btn:hover { color: var(--fg); border-color: rgba(255, 255, 255, 0.3); }
-.ctl-btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
-.ctl-btn svg { width: 15px; height: 15px; }
 
 /* Intro */
 .profile { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: start; padding-block: 2.5rem; }
@@ -319,7 +333,6 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
   .d-grid { grid-template-columns: minmax(0, 1fr); }
   .d-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .nav ul li:not(:last-child) { display: none; }
-  .ctl { display: none; }
   .banner::after { background: linear-gradient(to bottom, rgba(7, 8, 10, 0.2) 0%, var(--bg) 92%); }
 }
 @media (max-width: 560px) {
@@ -344,9 +357,17 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
       <li><a class="pill" href="#contact">Contact</a></li>
     </ul>
   </div>
+  <div class="strip" aria-hidden="true"><i id="strip"></i></div>
 </nav>
 
-<!-- Quick contact rail: appears in the left margin once you scroll past the banner (wide screens) -->
+<!-- Route: fixed line in the left margin (wide screens); stations are placed by script -->
+<aside class="route" id="route" aria-label="Page sections">
+  <div class="track"></div><div class="done" id="route-done"></div>
+  <svg class="rocket" id="rocket" viewBox="0 0 22 44" aria-hidden="true"><path class="flame" d="M7 33 L11 43 L15 33 Z" fill="#ff5a1f"/><path d="M11 1 C6 7 5 13 5 18 V31 H17 V18 C17 13 16 7 11 1 Z" fill="#e8ecf8"/><path d="M5 24 L1 32 V34 H5 M17 24 L21 32 V34 H17" fill="#4cc9ff"/></svg>
+  <span class="end">Next: aerospace</span>
+</aside>
+
+<!-- Quick contact rail: appears in the right margin once you scroll past the banner (wide screens) -->
 <aside class="rail" id="rail" aria-label="Quick contact">
   <figure class="media pfp"><img src="images/portrait-sm.jpg" alt="Ansh Gupta"><figcaption class="ph">AG</figcaption></figure>
   <button class="rail-btn" type="button" data-copy-text="anshg06@hotmail.com" aria-label="Copy email address anshg06@hotmail.com">
@@ -359,7 +380,7 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
   </a>
 </aside>
 
-<!-- BANNER: optional wide photo at images/banner.jpg (about 2400 × 900). Without it the banner is a dark CAD grid behind the wireframe. -->
+<!-- BANNER: optional wide photo at images/banner.jpg (about 2400 × 900). Without it the banner is a dark CAD grid. -->
 <header class="banner" id="banner">
   <img src="images/banner.jpg" alt="" onerror="this.parentElement.classList.add('empty')">
   <div class="wrap banner-inner" id="top">
@@ -370,11 +391,6 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
       <h1>Ansh Gupta</h1>
       <p class="role">Mechanical Engineering student, Aerospace Option, at UBC.</p>
     </div>
-  </div>
-  <div class="ctl" id="ctl" role="group" aria-label="Wireframe models">
-    <button type="button" class="ctl-btn" id="prev" aria-label="Previous model"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <p class="fig" id="fig" aria-live="polite">FIG. 01 / 05<br>RC vehicle</p>
-    <button type="button" class="ctl-btn" id="next" aria-label="Next model"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
 </header>
 
@@ -1908,304 +1924,31 @@ dlg.addEventListener("close", () => { if (activeSim) { activeSim.destroy(); acti
 list.addEventListener("click", e => { const c = e.target.closest("a.pcard"); if (c) { e.preventDefault(); openProject(+c.dataset.i); } });
 gal.addEventListener("click", e => { const t = e.target.closest(".tile"); if (t) { e.preventDefault(); openPhoto(+t.dataset.g); } });
 
-/* ---------- Scroll wireframe ----------
-   Big in the banner at the top; on scroll it shrinks into the right margin and turns with the page.
-   The five models get equal shares of the scroll, with a smooth crossfade between neighbours.
-   To use real CAD later, replace a mesh's v (vertices) and e (edge index pairs) with edges from your STL. */
+/* ---------- Route rocket and contact rail ---------- */
 (() => {
-  const TAU = Math.PI * 2, RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const Mesh = () => ({ v: [], e: [] });
-  const addV = (m, p) => (m.v.push(p), m.v.length - 1);
-  const ringPts = (c, r, n, ax) => Array.from({ length: n }, (_, i) => {
-    const a = i / n * TAU, x = Math.cos(a) * r, y = Math.sin(a) * r;
-    return ax === "y" ? [c[0] + x, c[1], c[2] + y] : ax === "z" ? [c[0] + x, c[1] + y, c[2]] : [c[0], c[1] + x, c[2] + y];
-  });
-  const poly = (m, pts, closed) => { const ids = pts.map(p => addV(m, p)); for (let i = 0; i < ids.length - (closed ? 0 : 1); i++) m.e.push([ids[i], ids[(i + 1) % ids.length]]); return ids; };
-  const ring = (m, c, r, n, ax) => poly(m, ringPts(c, r, n, ax), true);
-  const box = (m, c, s) => { const ids = []; for (const i of [-1, 1]) for (const j of [-1, 1]) for (const k of [-1, 1]) ids.push(addV(m, [c[0] + i * s[0] / 2, c[1] + j * s[1] / 2, c[2] + k * s[2] / 2])); [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]].forEach(([p, q]) => m.e.push([ids[p], ids[q]])); };
-  /* Surface of revolution: prof = [[radius, position along axis]], axis "y" (vertical) or "x" (lengthwise) */
-  const lathe = (m, prof, n, every, c = [0, 0, 0], ax = "y") => {
-    let prev = null;
-    prof.forEach(([r, u]) => {
-      const cc = ax === "y" ? [c[0], c[1] + u, c[2]] : [c[0] + u, c[1], c[2]];
-      const cur = r === 0 ? [addV(m, cc)] : ring(m, cc, r, n, ax);
-      if (prev) for (let i = 0; i < n; i += every) m.e.push([prev[prev.length === 1 ? 0 : i], cur[cur.length === 1 ? 0 : i]]);
-      prev = cur;
-    });
-  };
-  const loft = (m, sections) => { let prev = null; sections.forEach(sec => { const cur = poly(m, sec, true); if (prev) prev.forEach((id, i) => m.e.push([id, cur[i]])); prev = cur; }); };
-  const seg = (out, a, b, w = 1) => out.push([a, b, w]);
-
-  /* 01 Rocket */
-  const rocket = Mesh();
-  lathe(rocket, [[0, 1.6], [0.08, 1.42], [0.15, 1.22], [0.2, 1.02], [0.22, 0.85], [0.22, 0.12], [0.22, 0.02], [0.22, -0.9]], 20, 2);
-  lathe(rocket, [[0.1, -0.9], [0.14, -1.0], [0.2, -1.15]], 12, 2);
-  for (let k = 0; k < 4; k++) { const a = k * TAU / 4 + TAU / 8; poly(rocket, [[0.22, -0.38], [0.6, -0.92], [0.6, -1.06], [0.22, -0.88]].map(([r, y]) => [r * Math.cos(a), y, r * Math.sin(a)]), true); }
-  rocket.scale = 0.82; rocket.offset = -0.22; rocket.name = "Rocket";
-
-  /* 02 Fixed-wing aircraft (nose toward -x) */
-  const plane = Mesh();
-  lathe(plane, [[0, -1.3], [0.07, -1.2], [0.13, -1.02], [0.16, -0.75], [0.16, 0.55], [0.12, 0.9], [0.06, 1.15], [0.03, 1.25]], 16, 2, [0, 0, 0], "x");
-  for (const s of [-1, 1]) {
-    poly(plane, [[-0.25, -0.05, 0.14 * s], [0.25, -0.05, 0.14 * s], [0.45, 0.02, 1.15 * s], [0.3, 0.02, 1.15 * s]], true);
-    poly(plane, [[0.85, 0.04, 0.07 * s], [1.1, 0.04, 0.07 * s], [1.22, 0.06, 0.42 * s], [1.1, 0.06, 0.42 * s]], true);
-    lathe(plane, [[0.075, -0.12], [0.075, 0.2]], 12, 3, [0, -0.14, 0.5 * s], "x");
+  const banner = document.getElementById("banner"), rail = document.getElementById("rail");
+  const route = document.getElementById("route"), done = document.getElementById("route-done"), rocket = document.getElementById("rocket"), strip = document.getElementById("strip");
+  const STOPS = [["top", "Launch"], ["work", "Projects"], ["builds", "Builds"], ["experience", "Experience"], ["skills", "Skills"], ["contact", "Contact"]]
+    .filter(([id]) => { const el = document.getElementById(id); return el && el.offsetParent !== null; });
+  const links = STOPS.map(([id, label]) => { const a = document.createElement("a"); a.href = "#" + id; a.textContent = label; route.append(a); return a; });
+  let marks = [];
+  function place() {
+    const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    marks = STOPS.map(([id]) => Math.min(1, Math.max(0, (document.getElementById(id).getBoundingClientRect().top + scrollY - 120) / max)));
+    links.forEach((a, k) => a.style.top = (marks[k] * 100) + "%");
   }
-  poly(plane, [[0.8, 0.1, 0], [1.15, 0.1, 0], [1.28, 0.52, 0], [1.13, 0.52, 0]], true);
-  plane.scale = 0.95; plane.name = "Aircraft";
-
-  /* 03 RC water delivery vehicle */
-  /* Modelled on the real build: aluminium plate chassis, chunky tyres, two soda-bottle tanks with
-     their necks forward, a paper wing on top, wire bundles, and a 2-servo turret at the front (+x) */
-  const rc = Mesh();
-  const bez = (a, c, b, n = 10) => Array.from({ length: n + 1 }, (_, i) => { const t = i / n, u = 1 - t; return a.map((_, k) => u * u * a[k] + 2 * u * t * c[k] + t * t * b[k]); });
-  /* Chassis plate: rounded outline, two layers */
-  const plate = Array.from({ length: 16 }, (_, i) => { const a = (i + 0.5) / 16 * TAU, cx = Math.cos(a), cz = Math.sin(a); return [Math.sign(cx) * Math.min(0.64, Math.abs(cx) * 0.9), Math.sign(cz) * Math.min(0.24, Math.abs(cz) * 0.4)]; });
-  loft(rc, [plate.map(([x, z]) => [x, 0, z]), plate.map(([x, z]) => [x, 0.03, z])]);
-  /* Tyres: tread faces, rims and tread lines; axles between each pair */
-  const WH = [[-0.45, -0.02, -0.36], [0.45, -0.02, -0.36], [-0.45, -0.02, 0.36], [0.45, -0.02, 0.36]];
-  WH.forEach(([x, y, z]) => {
-    const o = Math.sign(z), A = ring(rc, [x, y, z - 0.065], 0.2, 16, "z"), B = ring(rc, [x, y, z + 0.065], 0.2, 16, "z");
-    for (let i = 0; i < 16; i += 2) rc.e.push([A[i], B[i]]);
-    ring(rc, [x, y, z + 0.066 * o], 0.12, 12, "z");
-    ring(rc, [x, y, z + 0.066 * o], 0.04, 8, "z");
-  });
-  for (const x of [-0.45, 0.45]) poly(rc, [[x, -0.02, -0.3], [x, -0.02, 0.3]], false);
-  box(rc, [0.5, -0.02, 0], [0.1, 0.06, 0.14]); // steering servo
-  /* Bottle tanks: lathed along a tilted axis (necks toward the front) */
-  const bottle = (c, len, R, tilt) => {
-    const ct = Math.cos(tilt), st = Math.sin(tilt), P = (u, ry, rz) => [c[0] + u * ct - ry * st, c[1] + u * st + ry * ct, c[2] + rz];
-    const prof = [[0.55, 0], [0.92, 0.04], [1, 0.12], [0.94, 0.3], [1, 0.48], [1, 0.62], [0.82, 0.75], [0.42, 0.86], [0.26, 0.9], [0.26, 0.97], [0.32, 0.97], [0.32, 1.04]];
-    let prev = null;
-    prof.forEach(([r, u]) => {
-      const cur = poly(rc, Array.from({ length: 12 }, (_, i) => { const a = i / 12 * TAU; return P(u * len, Math.cos(a) * r * R, Math.sin(a) * r * R); }), true);
-      if (prev) for (let i = 0; i < 12; i += 3) rc.e.push([prev[i], cur[i]]);
-      prev = cur;
-    });
-    return P(1.04 * len, 0, 0);
-  };
-  const neck = bottle([-0.58, 0.2, 0], 0.72, 0.16, 0);
-  const neck2 = bottle([-0.64, 0.55, 0], 0.78, 0.17, -0.24);
-  /* Water line: both bottle necks feed a junction; the last run to the nozzle moves with the turret */
-  const JUNC = [0.3, 0.27, 0];
-  poly(rc, bez(neck, [0.26, 0.2, 0], JUNC, 6), false);
-  poly(rc, bez(neck2, [0.25, 0.34, 0], JUNC, 6), false);
-  /* Electronics: Arduino on its protoboard, battery pack; each wire runs between two parts */
-  box(rc, [0.2, 0.05, -0.17], [0.22, 0.03, 0.14]);
-  box(rc, [0.2, 0.08, -0.17], [0.14, 0.02, 0.08]);
-  box(rc, [-0.05, 0.08, 0.17], [0.32, 0.1, 0.12]);
-  [[[0.11, 0.13, 0.17], [0.14, 0.16, 0.02], [0.14, 0.09, -0.13]],   // battery to Arduino
-   [[0.27, 0.09, -0.15], [0.37, 0.15, -0.12], [0.43, 0.09, -0.04]], // Arduino to pan servo
-   [[0.25, 0.09, -0.17], [0.4, 0.32, -0.15], [0.48, 0.26, -0.03]],  // Arduino to tilt servo
-   [[0.22, 0.09, -0.23], [0.46, 0.09, -0.24], [0.5, 0.01, -0.07]]]  // Arduino to steering servo
-    .forEach(([a, c, b]) => poly(rc, bez(a, c, b, 8), false));
-  /* Turret mount: pan servo on the chassis, bracket, tilt servo */
-  const PIV = [0.48, 0.3, 0];
-  box(rc, [0.48, 0.08, 0], [0.1, 0.09, 0.1]);
-  poly(rc, [[0.48, 0.12, -0.03], [0.48, 0.26, -0.03]], false);
-  poly(rc, [[0.48, 0.12, 0.03], [0.48, 0.26, 0.03]], false);
-  rc.offset = -0.24; rc.scale = 1.05; rc.name = "RC vehicle";
-  rc.anim = t => {
-    /* Turret pans and tilts; the hose follows the nozzle from the junction; wheels spin */
-    const out = [], yaw = Math.sin(t * 0.6) * 0.6, pit = 0.15 + Math.sin(t * 0.9) * 0.2;
-    const d = [Math.cos(pit) * Math.cos(yaw), Math.sin(pit), -Math.cos(pit) * Math.sin(yaw)], at = L => PIV.map((p, k) => p + d[k] * L);
-    const tip = at(0.34), side = [-d[2], 0, d[0]];
-    for (const [w, L0, L1] of [[0.035, -0.05, 0.05]]) for (const s of [-1, 1]) seg(out, [PIV[0] + d[0] * L0 + side[0] * w * s, PIV[1] + d[1] * L0 + w * s, PIV[2] + d[2] * L0 + side[2] * w * s], [PIV[0] + d[0] * L1 + side[0] * w * s, PIV[1] + d[1] * L1 + w * s, PIV[2] + d[2] * L1 + side[2] * w * s]);
-    seg(out, at(-0.05), tip);
-    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, b = (i + 1) / 6 * TAU, q = (A, r) => [tip[0] + (side[0] * Math.cos(A) - d[0] * 0) * r, tip[1] + Math.sin(A) * r, tip[2] + side[2] * Math.cos(A) * r]; seg(out, q(a, 0.045), q(b, 0.045)); }
-    const hose = bez(JUNC, [0.4, 0.2, 0], at(-0.05), 8);
-    for (let i = 0; i < hose.length - 1; i++) seg(out, hose[i], hose[i + 1]);
-    WH.forEach(c => { const z = c[2] + 0.066 * Math.sign(c[2]); for (let i = 0; i < 5; i++) { const a = -t * 3 + i / 5 * TAU; seg(out, [c[0] + Math.cos(a) * 0.04, c[1] + Math.sin(a) * 0.04, z], [c[0] + Math.cos(a) * 0.12, c[1] + Math.sin(a) * 0.12, z], 0.6); } });
-    return out;
-  };
-
-  /* 04 Quadcopter */
-  const drone = Mesh();
-  box(drone, [0, 0, 0], [0.38, 0.12, 0.3]);
-  box(drone, [0, 0.09, 0], [0.24, 0.06, 0.2]);
-  box(drone, [0.24, -0.08, 0], [0.09, 0.09, 0.09]);
-  const ARMS = [[0.62, 0.62], [-0.62, 0.62], [0.62, -0.62], [-0.62, -0.62]];
-  ARMS.forEach(([x, z]) => {
-    drone.e.push([addV(drone, [Math.sign(x) * 0.15, 0, Math.sign(z) * 0.12]), addV(drone, [x, 0, z])]);
-    lathe(drone, [[0.06, -0.02], [0.06, 0.06]], 10, 5, [x, 0, z]);
-    ring(drone, [x, 0.09, z], 0.3, 28, "y");
-  });
-  for (const x of [-0.17, 0.17]) { poly(drone, [[x, -0.3, -0.26], [x, -0.3, 0.26]], false); poly(drone, [[x * 0.7, -0.06, -0.1], [x, -0.3, -0.16]], false); poly(drone, [[x * 0.7, -0.06, 0.1], [x, -0.3, 0.16]], false); }
-  drone.name = "Quadcopter";
-  drone.anim = t => {
-    const out = [];
-    ARMS.forEach(([x, z], i) => { const a = t * 14 * (i % 3 === 0 ? 1 : -1); for (const k of [0, Math.PI]) seg(out, [x, 0.1, z], [x + Math.cos(a + k) * 0.27, 0.1, z + Math.sin(a + k) * 0.27], 0.7); });
-    return out;
-  };
-  drone.bob = t => Math.sin(t * 1.4) * 0.05;
-
-  /* Canada Line train: two-car Hyundai Rotem-style set on the elevated concrete guideway */
-  const train = Mesh();
-  /* Body cross-section [y, z]: near-vertical sides, rounded roof shoulders, small skirt taper */
-  const PROF = [[-0.3, -0.27], [-0.24, -0.3], [0.15, -0.3], [0.22, -0.29], [0.27, -0.26], [0.295, -0.21], [0.302, -0.14],
-                [0.302, 0.14], [0.295, 0.21], [0.27, 0.26], [0.22, 0.29], [0.15, 0.3], [-0.24, 0.3], [-0.3, 0.27]];
-  const tsec = (x, zs = 1, top = 1, bot = 1) => PROF.map(([y, z]) => [x, y > 0 ? y * top : y * bot, z * zs]);
-  const side = (m, s, zz, x0, x1, y0, y1) => poly(m, [[s * x0, y0, zz], [s * x1, y0, zz], [s * x1, y1, zz], [s * x0, y1, zz]], true);
-  /* Cab front, traced from the elevation drawing in pixel coordinates (centre x 517, top y 140)
-     and mapped onto a blunt face that leans back slightly toward the roof */
-  const xf = y => 1.67 - 0.06 * Math.min(1, Math.max(0, (y + 0.05) / 0.35));
-  const FY = py => 0.276 - (py - 140) / 290 * 0.556, FZ = px => (px - 517) / 172 * 0.27;
-  const face = (s, pts, closed) => poly(train, pts.map(([px, py]) => { const y = FY(py); return [s * (xf(y) + 0.004), y, FZ(px)]; }), closed);
-  const fRing = (s, cx, cy, r, n = 14) => face(s, Array.from({ length: n }, (_, i) => [cx + Math.cos(i / n * TAU) * r, cy + Math.sin(i / n * TAU) * r]), true);
-  const fCurve = (a, c, b, n = 8) => Array.from({ length: n + 1 }, (_, i) => { const t = i / n, u = 1 - t; return [u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]]; });
-  const rrect = (x0, y0, x1, y1, r) => { const p = [], arc = (cx, cy, a0) => { for (let i = 0; i <= 4; i++) { const a = a0 + i / 4 * TAU / 4; p.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } };
-    arc(x1 - r, y0 + r, -TAU / 4); arc(x1 - r, y1 - r, 0); arc(x0 + r, y1 - r, TAU / 4); arc(x0 + r, y0 + r, TAU / 2); return p; };
-  for (const s of [-1, 1]) {
-    /* Car shell, rounding into a flat, slightly raked cab face */
-    const faceSec = PROF.map(([y, z]) => { const yy = y > 0 ? y * 0.92 : y; return [s * xf(yy), yy, z * 0.9]; });
-    loft(train, [tsec(0.04 * s), tsec(1.45 * s), tsec(1.56 * s, 0.97, 0.97), faceSec]);
-    face(s, [[395, 415], [390, 260], [393, 200], [405, 172], [430, 157], [517, 154], [604, 157], [629, 172], [641, 200], [644, 260], [639, 415]], false); // arched mask
-    face(s, rrect(403, 194, 631, 337, 14), true);                       // windshield
-    face(s, [[455, 165], [578, 165], [578, 188], [455, 188]], true);    // destination sign
-    for (const cx of [437, 597]) fRing(s, cx, 177, 11, 10);             // marker lights
-    for (const [cx, cy] of [[392, 372], [423, 387], [611, 387], [642, 372]]) fRing(s, cx, cy, 14);  // headlights
-    face(s, fCurve([347, 330], [372, 408], [452, 416]), false);         // sweep lines into the bumper
-    face(s, fCurve([687, 330], [662, 408], [582, 416]), false);
-    face(s, [[352, 418], [682, 418]], false);                           // bumper band
-    box(train, [s * 1.69, -0.33, 0], [0.05, 0.05, 0.12]);               // coupler
-    for (const sd of [-1, 1]) {
-      const zz = 0.302 * sd;
-      /* Window band, double plug doors with their own windows */
-      for (const [a, b] of [[0.12, 0.33], [0.57, 0.75], [0.75, 0.93], [1.17, 1.36]]) side(train, s, zz, a, b, 0.0, 0.15);
-      for (const dx of [0.45, 1.05]) {
-        side(train, s, zz, dx - 0.09, dx + 0.09, -0.25, 0.17);
-        poly(train, [[s * dx, -0.25, zz], [s * dx, 0.17, zz]], false);
-        for (const [a, b] of [[-0.075, -0.012], [0.012, 0.075]]) side(train, s, zz, dx + a, dx + b, 0.0, 0.13);
-      }
-    }
-    /* Roof equipment */
-    for (const bx of [0.5, 1.1]) box(train, [bx * s, 0.33, 0], [0.32, 0.05, 0.28]);
-    /* Bogies: frame plus two axles of wheels each side */
-    for (const bx of [0.35 * s, 1.25 * s]) {
-      box(train, [bx, -0.38, 0], [0.34, 0.06, 0.4]);
-      for (const dx of [-0.11, 0.11]) for (const z of [-0.22, 0.22]) ring(train, [bx + dx, -0.385, z], 0.07, 12, "z");
-    }
+  function fly() {
+    const max = Math.max(1, document.documentElement.scrollHeight - innerHeight), f = Math.min(1, scrollY / max);
+    done.style.height = rocket.style.top = (f * 100) + "%";
+    strip.style.width = (f * 100) + "%";
+    links.forEach((a, k) => a.classList.toggle("passed", f >= marks[k] - 0.002));
+    rail.classList.toggle("show", scrollY > banner.offsetHeight * 0.6);
   }
-  box(train, [0, -0.03, 0], [0.08, 0.46, 0.46]); // gangway between the two cars
-  /* Elevated guideway: deck with parapet walls over a box girder */
-  const GL = 1.85;
-  const GW = [[-0.5, -0.3], [-0.45, -0.3], [-0.45, -0.46], [0.45, -0.46], [0.45, -0.3], [0.5, -0.3], [0.5, -0.52], [0.3, -0.56], [0.24, -0.82], [-0.24, -0.82], [-0.3, -0.56], [-0.5, -0.52]];
-  loft(train, [GW.map(([z, y]) => [-GL, y, z]), GW.map(([z, y]) => [GL, y, z])]);
-  for (const z of [-0.22, 0.22]) poly(train, [[-GL, -0.445, z], [GL, -0.445, z]], false);
-  train.scale = 0.72; train.offset = 0.22; train.name = "Canada Line train";
-  train.anim = t => {
-    /* Expansion-joint ticks running along the parapets so the train reads as moving */
-    const out = [];
-    for (let k = 0; k < 11; k++) { const x = ((k * 0.34 - t * 0.6) % (2 * GL) + 2 * GL) % (2 * GL) - GL; for (const sd of [-1, 1]) seg(out, [x, -0.52, 0.5 * sd], [x, -0.3, 0.5 * sd], 0.4); }
-    return out;
-  };
-
-  /* Order of models; the page starts on a random one */
-  const MODELS = [rc, train, drone, rocket, plane];
-  const N = MODELS.length;
-
-  const cv = document.createElement("canvas");
-  cv.className = "wire"; cv.setAttribute("aria-hidden", "true");
-  document.body.prepend(cv);
-  const ctx = cv.getContext("2d");
-  const banner = document.getElementById("banner"), rail = document.getElementById("rail"), fig = document.getElementById("fig"), ctl = document.getElementById("ctl");
-  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
-  const ease = x => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
-  const smooth = x => x * x * (3 - 2 * x);
-  const lerp = (a, b, f) => a + (b - a) * f;
-  const pad = n => String(n).padStart(2, "0");
-
-  function draw(m, t, yaw, pitch, cx, cy, k, alpha) {
-    if (alpha <= 0.01) return;
-    k *= m.scale || 1;
-    const D = 5, ca = Math.cos(yaw), sa = Math.sin(yaw), cb = Math.cos(pitch), sb = Math.sin(pitch), oy = (m.offset || 0) + (m.bob ? m.bob(t) : 0);
-    const P = p => { const x1 = p[0] * ca + p[2] * sa, z1 = -p[0] * sa + p[2] * ca, y = p[1] + oy, y2 = y * cb - z1 * sb, z2 = y * sb + z1 * cb, s = k * D / (D - z2); return [cx + x1 * s, cy - y2 * s, z2]; };
-    const segs = m.e.map(([a, b]) => [m.v[a], m.v[b], 1]);
-    if (m.anim) segs.push(...m.anim(t));
-    for (const [a, b, w] of segs) {
-      const A = P(a), B = P(b), al = (0.1 + 0.5 * clamp(((A[2] + B[2]) / 2 + 1.4) / 2.8)) * alpha * w;
-      ctx.strokeStyle = `rgba(236,238,241,${al.toFixed(3)})`;
-      ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
-    }
-  }
-  function label(idx, x, y, alpha) {
-    if (alpha <= 0.02) return;
-    ctx.font = "400 10px 'JetBrains Mono', ui-monospace, monospace";
-    ctx.textAlign = "center";
-    ctx.fillStyle = `rgba(134,140,150,${(alpha * 0.7).toFixed(3)})`;
-    ctx.fillText(`${pad(idx + 1)} / ${pad(N)}`, x, y);
-    ctx.fillStyle = `rgba(134,140,150,${alpha.toFixed(3)})`;
-    ctx.fillText(MODELS[idx].name.toUpperCase(), x, y + 15);
-  }
-
-  /* Top-of-page model: random start, arrows, and auto-cycle while at the top */
-  const t0 = performance.now();
-  const now = () => RM ? 0 : (performance.now() - t0) / 1000;
-  let base = Math.floor(Math.random() * N), oldBase = base, baseAt = -10, lastUser = -100, lastAuto = 0;
-  const setBase = (b, t) => { b = ((b % N) + N) % N; if (b === base) return; oldBase = base; base = b; baseAt = t; };
-  document.getElementById("prev").addEventListener("click", () => { const t = now(); lastUser = t; setBase(base - 1, t); if (RM) requestAnimationFrame(frame); });
-  document.getElementById("next").addEventListener("click", () => { const t = now(); lastUser = t; setBase(base + 1, t); if (RM) requestAnimationFrame(frame); });
-
-  let sySmooth = scrollY, lastFig = "", dockT = 0, lastT = 0;
-  function frame(ms) {
-    const t = RM ? 0 : (ms - t0) / 1000;
-    const W = innerWidth, H = innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
-    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineWidth = 1;
-
-    /* eased scroll position, so fast flicks glide instead of jump */
-    sySmooth = RM ? scrollY : lerp(sySmooth, scrollY, 0.14);
-    if (Math.abs(sySmooth - scrollY) < 0.3) sySmooth = scrollY;
-    const sy = sySmooth, bh = banner.offsetHeight, wide = W > 880;
-
-    /* auto-cycle only while the banner is in view; pauses for a while after an arrow click */
-    if (!RM) {
-      if (scrollY > bh * 0.25) lastAuto = t;
-      else if (t - lastUser > 10 && t - Math.max(lastAuto, baseAt) > 6) { lastAuto = t; setBase(base + 1, t); }
-    }
-
-    /* top: above the FIG label in the banner */
-    const cr = ctl.getBoundingClientRect();
-    const cx0 = cr.width ? cr.left + cr.width / 2 : W * 0.68;
-    const cy0 = banner.offsetTop + bh * 0.42 - sy * 0.55, k0 = wide ? bh * 0.27 : bh * 0.22;
-    /* docked: small, centred in the right margin; shown at the same width as the contact rail (1260 px) */
-    const margin = (W - 1080) / 2 - 24;
-    const docks = W >= 1260, roomy = margin >= 110;
-    const cxD = docks ? W - margin / 2 - 8 : cx0, kD = docks ? Math.max(26, Math.min(margin * 0.36, 120)) : k0;
-    /* the banner copy fades out as you scroll past; the side copy fades in with the contact rail (same 0.4 s, same 8 px nudge) */
-    const topA = (wide ? 1 : 0.45) * (1 - clamp(sy / (bh * 0.55)));
-    const dt = Math.max(0, t - lastT); lastT = t;
-    dockT = RM ? (scrollY > bh * 0.6 ? 1 : 0) : clamp(dockT + (scrollY > bh * 0.6 ? 1 : -1) * dt / 0.4);
-    const dockE = ease(dockT), dockA = docks ? 0.85 * dockE : 0;
-
-    /* scrolling walks through all models, equal share each, starting from the top model */
-    const maxS = Math.max(1, document.documentElement.scrollHeight - H);
-    const q = clamp((sy - bh * 0.4) / Math.max(1, maxS - bh * 0.4)) * (N - 1);
-    const i = Math.min(N - 1, Math.floor(q)), w = i >= N - 1 ? 0 : smooth(clamp((q - i - 0.35) / 0.3));
-    const mix = b => [[(b + i) % N, 1 - w], [(b + i + 1) % N, w]];
-    const fb = RM ? 1 : clamp((t - baseAt) / 0.6);
-
-    const yaw = 0.7 + t * 0.1 + sy * 0.0028, pitch = 0.3 + Math.sin(sy * 0.0011) * 0.1;
-    const views = [[cx0, cy0, k0, topA, false], [cxD + 8 * (1 - dockE), H * 0.52, kD, dockA, true]];
-    for (const [cx, cy, k, a, isDock] of views) {
-      if (a <= 0.01) continue;
-      const ly = cy + k * 1.55;
-      for (const [m, mw] of mix(base)) { draw(MODELS[m], t, yaw, pitch, cx, cy, k, a * mw * fb); if (isDock && roomy) label(m, cx, ly, a * mw * fb); }
-      if (fb < 1) for (const [m, mw] of mix(oldBase)) { draw(MODELS[m], t, yaw, pitch, cx, cy, k, a * mw * (1 - fb)); if (isDock && roomy) label(m, cx, ly, a * mw * (1 - fb)); }
-    }
-
-    const shown = ((fb < 0.5 ? oldBase : base) + (w > 0.5 ? i + 1 : i)) % N;
-    const figText = `FIG. ${pad(shown + 1)} / ${pad(N)}<br>${MODELS[shown].name}`;
-    if (figText !== lastFig) { lastFig = figText; fig.innerHTML = figText; }
-    const ctlA = 1 - clamp(sy / (bh * 0.4));
-    ctl.style.opacity = String(ctlA);
-    ctl.style.visibility = ctlA < 0.05 ? "hidden" : "visible";
-
-    rail.classList.toggle("show", scrollY > bh * 0.6);
-    if (!RM) requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-  if (RM) { addEventListener("scroll", () => requestAnimationFrame(frame), { passive: true }); addEventListener("resize", () => requestAnimationFrame(frame)); }
+  place(); fly();
+  addEventListener("scroll", fly, { passive: true });
+  addEventListener("resize", () => { place(); fly(); });
+  addEventListener("load", () => { place(); fly(); });
+  if ("ResizeObserver" in window) new ResizeObserver(() => { place(); fly(); }).observe(document.body);
 })();
 
 /* ---------- Copy email ---------- */
