@@ -183,14 +183,15 @@ h3 { font-size: 1.25rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.
 .projects { position: relative; isolation: isolate; }
 /* Memories: a muted clip of the project plays behind its card while the card is in view,
    dimmed and vignetted into the page like the banner photo */
-.memory { position: absolute; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 1.4s ease;
+.memory { position: absolute; z-index: -1; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 1.4s ease;
   --fx: 240px; --fy: 100px;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fx), #000 calc(100% - var(--fx)), transparent), linear-gradient(to bottom, transparent, #000 var(--fy), #000 calc(100% - var(--fy)), transparent);
   -webkit-mask-composite: source-in;
   mask-image: linear-gradient(to right, transparent, #000 var(--fx), #000 calc(100% - var(--fx)), transparent), linear-gradient(to bottom, transparent, #000 var(--fy), #000 calc(100% - var(--fy)), transparent);
   mask-composite: intersect; }
 .memory.on { opacity: 1; }
-.memory video, .memory img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; filter: saturate(0.7) contrast(1.08); }
+.memory video, .memory img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: saturate(0.7) contrast(1.08); transition: opacity 1.2s ease; }
+.memory .show { opacity: 0.55; }
 .memory img { animation: drift 24s ease-in-out infinite alternate; }
 @keyframes drift { from { transform: scale(1.04) translateX(-1.5%); } to { transform: scale(1.12) translateX(1.5%); } }
 .memory::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, rgba(7, 8, 10, 0.35) 0 1px, transparent 1px 3px), linear-gradient(rgba(76, 201, 255, 0.07), rgba(76, 201, 255, 0.07)); }
@@ -592,10 +593,10 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
    - size: "hero" (full width, largest), "big" (full width), "medium" (half), "small" (a third).
      Keep mediums in pairs and smalls in threes so rows stay full.
    - media: the first item is the card's cover photo unless cover is set. Add as many as you like.
-   - memory: optional clip (.mp4) or photo that plays dimmed behind the card while it is in view. */
+   - While a card is in view, its photos and videos cycle dimmed behind it (YouTube items are skipped). */
 const PROJECTS = [
   {
-    title: "Mining Water Delivery Vehicle", size: "hero", badge: "1st of 20 teams", memory: "images/mining-drive.mp4",
+    title: "Mining Water Delivery Vehicle", size: "hero", badge: "1st of 20 teams",
     context: "UBC MECH · Team course project", dates: "Feb – Apr 2026",
     hook: "A remote-controlled vehicle with a servo-shifted 2-speed gearbox and a 2-axis water cannon turret. Placed 1st of 20 teams.",
     challenge: "Navigate an obstacle course and deliver a pressurized water payload to targets of varying height, using a radio limited to four control channels.",
@@ -626,7 +627,7 @@ const PROJECTS = [
     ]
   },
   {
-    title: "Car Crash Physics Simulator", size: "big", live: "sim", badge: "Try it live", memory: "images/crashsim-sports.jpg",
+    title: "Car Crash Physics Simulator", size: "big", live: "sim", badge: "Try it live",
     cover: ["images/crashsim-card.jpg", "A sports car stopped against the compressed spring"],
     context: "UBC · Dynamics course", dates: "Mar – Apr 2025",
     hook: "A real-time vehicle collision simulator, developed as the sole programmer on a team of four. Runs live in the browser.",
@@ -645,7 +646,7 @@ const PROJECTS = [
     ]
   },
   {
-    title: "Raspberry Pi Battle Bot", size: "medium", memory: "images/battlebot-taco.mp4",
+    title: "Raspberry Pi Battle Bot", size: "medium",
     context: "Personal project", dates: "Apr – Jun 2024",
     hook: "A voice-controlled Raspberry Pi robot that performs headbutt, scratch and spin manoeuvres on command.",
     challenge: "Build a robot that responds to spoken commands with choreographed movements, using a Raspberry Pi and 3D-printed parts.",
@@ -667,7 +668,7 @@ const PROJECTS = [
     link: ["https://www.youtube.com/watch?v=HjbLIFoOzLo", "Watch it respond to voice commands on YouTube"]
   },
   {
-    title: "Speed Wheel Raceway", size: "medium", live: "game", badge: "Playable", memory: "images/speedwheel-underground.jpg",
+    title: "Speed Wheel Raceway", size: "medium", live: "game", badge: "Playable",
     context: "Programming 11 · High school", dates: "Mar – Jun 2023",
     hook: "A puzzle platformer with a gravity-flip mechanic and a three-phase boss, written from scratch in Python. Playable in the browser.",
     challenge: "An open-ended, self-directed project with no restrictions on what to build. I chose a platformer themed around my interest in cars, and developed it in Python's SimpleGUI library without a game engine.",
@@ -789,40 +790,53 @@ list.innerHTML = PROJECTS.map((p, i) => p.note ? `
 watchImages(list);
 
 /* ---------- Memories behind the project cards ----------
-   Each card with a memory gets a vignetted layer behind it, wider than the card so it spills into the margins
-   (alternately a little to the right or left). Only the card nearest the middle of the screen plays; clips load on first use. */
+   While a card is nearest the middle of the screen, its own photos and videos cycle in a vignetted panel about a
+   third of the window wide, set against the left or right edge (alternating by project), half behind the card.
+   Videos play muted to the end (up to 10 s), photos hold for 6 s. Files load only when they come up. */
 (() => {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const wide = matchMedia("(min-width: 881px)");
-  const items = [...list.querySelectorAll("a.pcard[data-i]")].map(card => ({ card, src: PROJECTS[+card.dataset.i].memory })).filter(m => m.src);
+  const isMp4 = src => /\.mp4$/i.test(src);
+  const items = [...list.querySelectorAll("a.pcard[data-i]")].map(card => {
+    const p = PROJECTS[+card.dataset.i];
+    return { card, srcs: p.media.map(x => x[0]).filter(src => !isYT(src)), i: 0 };
+  }).filter(m => m.srcs.length);
   items.forEach((m, k) => {
     m.side = k % 2 ? -1 : 1;
     m.el = document.createElement("div"); m.el.className = "memory"; m.el.setAttribute("aria-hidden", "true");
     list.prepend(m.el);
   });
-  function load(m) {
-    if (m.media) return;
-    const vid = /\.mp4$/i.test(m.src);
-    m.media = document.createElement(vid ? "video" : "img");
-    if (vid) {
-      Object.assign(m.media, { muted: true, loop: true, playsInline: true, preload: "none", poster: m.src.replace(/\.mp4$/i, ".jpg") });
-      m.media.setAttribute("muted", ""); m.media.setAttribute("playsinline", ""); m.media.disablePictureInPicture = true;
-      if (!RM) m.media.src = m.src;
-    } else { m.media.src = m.src; m.media.alt = ""; }
-    m.el.append(m.media);
-  }
   function layout() {
-    const ext = Math.max(60, Math.min(300, (innerWidth - list.offsetWidth) / 2 + 40)), extY = 110;
-    /* keep each layer inside the window so it never adds a sideways scroll */
-    const minL = -list.getBoundingClientRect().left, maxR = minL + document.documentElement.clientWidth;
+    const minL = -list.getBoundingClientRect().left, vw = document.documentElement.clientWidth, extY = 80;
+    const w = Math.max(320, vw * 0.33);
     items.forEach(m => {
-      const c = m.card, shift = m.side * ext * 0.2;
-      const l = Math.max(minL, c.offsetLeft - ext + shift), r = Math.min(maxR, c.offsetLeft + c.offsetWidth + ext + shift);
-      m.el.style.setProperty("--fx", Math.round(ext * 0.5) + "px"); m.el.style.setProperty("--fy", Math.round(extY * 0.7) + "px");
-      Object.assign(m.el.style, { left: l + "px", top: (c.offsetTop - extY) + "px", width: (r - l) + "px", height: (c.offsetHeight + extY * 2) + "px" });
+      const c = m.card, l = m.side > 0 ? minL + vw - w : minL;
+      m.el.style.setProperty("--fx", Math.round(w * 0.22) + "px"); m.el.style.setProperty("--fy", Math.round(extY * 0.9) + "px");
+      Object.assign(m.el.style, { left: l + "px", top: (c.offsetTop - extY) + "px", width: w + "px", height: (c.offsetHeight + extY * 2) + "px" });
     });
   }
-  let active = null, queued = false;
+  let active = null, timer = 0, queued = false;
+  function show(m) {
+    clearTimeout(timer);
+    const src = m.srcs[m.i % m.srcs.length], vid = isMp4(src) && !RM;
+    const el = document.createElement(vid ? "video" : "img");
+    if (vid) {
+      el.muted = true; el.playsInline = true; el.disablePictureInPicture = true; el.preload = "auto";
+      el.setAttribute("muted", ""); el.setAttribute("playsinline", "");
+      el.poster = src.replace(/\.mp4$/i, ".jpg"); el.src = src;
+    } else { el.src = isMp4(src) ? src.replace(/\.mp4$/i, ".jpg") : src; el.alt = ""; }
+    const next = () => { if (active === m) { m.i++; show(m); } };
+    const old = [...m.el.children];
+    m.el.append(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
+    old.forEach(o => { o.classList.remove("show"); setTimeout(() => o.remove(), 1300); });
+    if (RM || m.srcs.length < 2) { if (vid) { el.loop = true; el.play().catch(() => {}); } return; }
+    if (vid) {
+      el.addEventListener("ended", next, { once: true });
+      el.play().catch(() => {});
+      timer = setTimeout(next, 10000);
+    } else timer = setTimeout(next, 6000);
+  }
   function pick() {
     queued = false;
     let best = null, bestD = Infinity;
@@ -831,18 +845,25 @@ watchImages(list);
       if (r.bottom > innerHeight * 0.15 && r.top < innerHeight * 0.85 && d < bestD) { best = m; bestD = d; }
     });
     if (best === active) return;
-    if (active) { const old = active; old.el.classList.remove("on"); setTimeout(() => { if (active !== old && old.media && old.media.pause) old.media.pause(); }, 1400); }
+    clearTimeout(timer);
+    if (active) {
+      const old = active; old.el.classList.remove("on");
+      setTimeout(() => { if (active !== old) old.el.querySelectorAll("video").forEach(v => v.pause()); }, 1400);
+    }
     active = best;
     if (best) {
-      load(best); best.el.classList.add("on");
-      if (best.media.play && !RM) best.media.play().catch(() => {});
+      best.el.classList.add("on");
+      const cur = best.el.querySelector(".show");
+      if (cur && cur.tagName === "VIDEO") cur.play().catch(() => {});
+      if (!cur) show(best);
+      else if (!RM && best.srcs.length > 1) timer = setTimeout(() => { if (active === best) { best.i++; show(best); } }, cur.tagName === "VIDEO" ? 8000 : 5000);
     }
   }
   const queue = () => { if (!queued) { queued = true; requestAnimationFrame(pick); } };
   layout(); pick();
   addEventListener("scroll", queue, { passive: true });
   addEventListener("resize", () => { layout(); queue(); });
-  if ("ResizeObserver" in window) new ResizeObserver(() => { layout(); queue(); }).observe(list);
+  if ("ResizeObserver" in window) { const ro = new ResizeObserver(() => { layout(); queue(); }); ro.observe(list); ro.observe(document.documentElement); }
 })();
 
 const gal = document.getElementById("gallery");
