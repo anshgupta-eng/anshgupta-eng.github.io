@@ -65,26 +65,46 @@ main.wrap, .banner-inner { position: relative; z-index: 2; }
 .rail-btn:hover .tip, .rail-btn:focus-visible .tip { opacity: 1; }
 @media (min-width: 1260px) { .rail { display: flex; } }
 
-/* Route: a line in the left margin with a station per section; the rocket rides it as you scroll */
-.route { position: fixed; z-index: 5; left: max(18px, calc((100vw - 1080px) / 4 - 48px)); top: 15vh; bottom: 12vh; width: 120px; display: none; }
+/* Route: a line in the left margin with a station per section. The craft climbs it as you scroll down the page,
+   from the launch pad at the bottom to orbit at the top, changing stage on the way. */
+.route { position: fixed; z-index: 5; left: max(18px, calc((100vw - 1080px) / 4 - 48px)); top: 16vh; bottom: 14vh; width: 120px; display: none; }
 @media (min-width: 1340px) { .route { display: block; } }
 .route .track { position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--line); }
-.route .done { position: absolute; left: 11px; top: 0; width: 2px; height: 0; background: var(--route); }
+.route .track::after { content: ""; position: absolute; left: -10px; bottom: -6px; width: 22px; height: 2px; background: rgba(255, 255, 255, 0.18); }
+.route .done { position: absolute; left: 11px; bottom: 0; width: 2px; height: 0; background: var(--route); }
 .route a { position: absolute; left: 0; display: flex; align-items: center; gap: 0.65rem; translate: 0 -50%; font-size: 0.82rem; font-weight: 500; color: var(--mute); transition: color .25s; }
 .route a::before { content: ""; width: 14px; height: 14px; margin-left: 5px; border: 2px solid rgba(255, 255, 255, 0.14); background: var(--bg); border-radius: 50%; transition: border-color .25s, background .25s; }
 .route a.passed { color: var(--fg); }
 .route a.passed::before { border-color: var(--route); background: var(--route); }
 .route a:hover { color: var(--route); }
-.route .end { position: absolute; left: 0; bottom: -2.2rem; font-size: 0.78rem; color: var(--mute); padding-left: 1.6rem; white-space: nowrap; }
-.route .end::before { content: ""; position: absolute; left: 7px; top: -1.35rem; height: 1.2rem; border-left: 2px dashed rgba(255, 255, 255, 0.14); }
-.rocket { position: absolute; left: 1px; top: 0; width: 22px; height: 44px; translate: 0 -50%; pointer-events: none; }
-.rocket .flame { transform-origin: 11px 34px; animation: burn .12s steps(2) infinite alternate; }
+.craft, .booster { position: absolute; left: -4px; top: 100%; width: 32px; height: 56px; translate: 0 -50%; pointer-events: none; overflow: visible; }
+.craft > g { opacity: 0; transition: opacity .35s; }
+.craft[data-stage="pad"] .s-full, .craft[data-stage="boost"] .s-full, .craft[data-stage="upper"] .s-upper,
+.craft[data-stage="plane"] .s-plane, .craft[data-stage="sat"] .s-sat, .craft[data-stage="live"] .s-sat { opacity: 1; }
+.craft .flame { opacity: 0; transform-box: fill-box; transform-origin: 50% 0; transition: opacity .25s; }
+.craft:not([data-stage="pad"]) .flame { opacity: 1; animation: burn .12s steps(2) infinite alternate; }
 @keyframes burn { to { transform: scaleY(1.35); } }
+/* Satellite: panels fold out and the lights come on once it reaches the top */
+.craft .panel { transform-box: fill-box; transition: transform .6s cubic-bezier(.3, 1.4, .5, 1), fill .6s; transform: scaleX(0.25); fill: #1a2a44; }
+.craft .panel.l { transform-origin: 100% 50%; }
+.craft .panel.r { transform-origin: 0 50%; }
+.craft[data-stage="live"] .panel { transform: scaleX(1); fill: #1f4f8f; }
+.craft .lamp, .craft .wave { opacity: 0; }
+.craft[data-stage="live"] .lamp { animation: blink 1.4s infinite; }
+.craft[data-stage="live"] .lamp.b { animation-delay: .7s; }
+.craft[data-stage="live"] .wave { animation: wave 1.8s infinite; }
+.craft[data-stage="live"] .wave.b { animation-delay: .6s; }
+@keyframes blink { 0%, 45% { opacity: 1; } 50%, 100% { opacity: .15; } }
+@keyframes wave { 0% { opacity: 0; } 30% { opacity: .9; } 100% { opacity: 0; } }
+/* Spent first stage: drops away from the point where it separated */
+.booster { opacity: 0; }
+.booster.drop { animation: drop 1.3s ease-in forwards; }
+@keyframes drop { 0% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translate(-6px, 46px) rotate(-28deg); } }
 /* Narrower screens: the route becomes a progress strip under the nav */
 .strip { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--line); }
 .strip i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--route); }
 @media (min-width: 1340px) { .strip { display: none; } }
-@media (prefers-reduced-motion: reduce) { .rocket .flame { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .craft .flame, .craft .lamp, .craft .wave { animation: none !important; } .craft[data-stage="live"] .lamp, .craft[data-stage="live"] .wave { opacity: 1; } .booster.drop { animation: none; } }
 
 /* Media slot: shows the photo, or a calm placeholder naming what goes there */
 .media { position: relative; margin: 0; background: var(--surface); overflow: hidden; }
@@ -363,8 +383,13 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
 <!-- Route: fixed line in the left margin (wide screens); stations are placed by script -->
 <aside class="route" id="route" aria-label="Page sections">
   <div class="track"></div><div class="done" id="route-done"></div>
-  <svg class="rocket" id="rocket" viewBox="0 0 22 44" aria-hidden="true"><path class="flame" d="M7 33 L11 43 L15 33 Z" fill="#ff5a1f"/><path d="M11 1 C6 7 5 13 5 18 V31 H17 V18 C17 13 16 7 11 1 Z" fill="#e8ecf8"/><path d="M5 24 L1 32 V34 H5 M17 24 L21 32 V34 H17" fill="#4cc9ff"/></svg>
-  <span class="end">Next: aerospace</span>
+  <svg class="booster" id="booster" viewBox="0 0 32 56" aria-hidden="true"><path d="M11.5 29 H20.5 V44 H11.5 Z" fill="#c9d0dd"/><path d="M11.5 36 L8 44 V46 H11.5 Z M20.5 36 L24 44 V46 H20.5 Z" fill="#4cc9ff"/><rect x="13" y="44" width="6" height="2" fill="#8a93a3"/></svg>
+  <svg class="craft" id="craft" viewBox="0 0 32 56" data-stage="pad" aria-hidden="true">
+    <g class="s-full"><path d="M16 2 C12.5 7 11.5 12 11.5 17 V29 H20.5 V17 C20.5 12 19.5 7 16 2 Z" fill="#e8ecf8"/><circle cx="16" cy="14" r="2" fill="#4cc9ff"/><path d="M11.5 29 H20.5 V44 H11.5 Z" fill="#c9d0dd"/><path d="M11.5 36 L8 44 V46 H11.5 Z M20.5 36 L24 44 V46 H20.5 Z" fill="#4cc9ff"/><rect x="13" y="44" width="6" height="2" fill="#8a93a3"/><path class="flame" d="M13 46 L16 55 L19 46 Z" fill="#ff5a1f"/><path class="flame" d="M14.5 46 L16 51 L17.5 46 Z" fill="#ffc23d"/></g>
+    <g class="s-upper"><path d="M16 2 C12.5 7 11.5 12 11.5 17 V29 H20.5 V17 C20.5 12 19.5 7 16 2 Z" fill="#e8ecf8"/><circle cx="16" cy="14" r="2" fill="#4cc9ff"/><path d="M11.5 23 L9.5 29 V30 H11.5 Z M20.5 23 L22.5 29 V30 H20.5 Z" fill="#4cc9ff"/><rect x="13.5" y="29" width="5" height="1.6" fill="#8a93a3"/><path class="flame" d="M13.5 30.6 L16 39 L18.5 30.6 Z" fill="#ff5a1f"/><path class="flame" d="M14.8 30.6 L16 35 L17.2 30.6 Z" fill="#ffc23d"/></g>
+    <g class="s-plane"><path d="M13.5 24 L4 38 V41 L13.5 40 Z M18.5 24 L28 38 V41 L18.5 40 Z" fill="#c9d0dd"/><path d="M16 4 C14 7 13.5 11 13.5 16 V42 H18.5 V16 C18.5 11 18 7 16 4 Z" fill="#e8ecf8"/><path d="M16 4 C15 5.5 14.6 7 14.4 9 H17.6 C17.4 7 17 5.5 16 4 Z" fill="#2a2f3a"/><rect x="15" y="11" width="2" height="3" rx=".6" fill="#4cc9ff"/><path class="flame" d="M14 42 L16 49 L18 42 Z" fill="#4cc9ff"/></g>
+    <g class="s-sat"><path class="wave b" d="M9 8 Q16 1 23 8" fill="none" stroke="#4cc9ff" stroke-width="1.2"/><path class="wave" d="M11.5 11 Q16 6.5 20.5 11" fill="none" stroke="#4cc9ff" stroke-width="1.2"/><path d="M16 19 V13" stroke="#e8ecf8" stroke-width="1"/><circle class="lamp" cx="16" cy="13" r="1.3" fill="#ffffff"/><path d="M12 20 Q16 14.5 20 20 Z" fill="#e8ecf8"/><path d="M8 26 H24" stroke="#8a93a3" stroke-width="1"/><rect class="panel l" x="-1" y="22" width="9" height="8"/><rect class="panel r" x="24" y="22" width="9" height="8"/><rect x="12" y="20" width="8" height="12" rx="1" fill="#d8b25a"/><path d="M12 24 H20 M12 28 H20" stroke="#a8862f" stroke-width=".6"/><circle class="lamp" cx="13.6" cy="30.4" r="1" fill="#3dff8f"/><circle class="lamp b" cx="18.4" cy="30.4" r="1" fill="#ff4d5a"/></g>
+  </svg>
 </aside>
 
 <!-- Quick contact rail: appears in the right margin once you scroll past the banner (wide screens) -->
@@ -1927,19 +1952,30 @@ gal.addEventListener("click", e => { const t = e.target.closest(".tile"); if (t)
 /* ---------- Route rocket and contact rail ---------- */
 (() => {
   const banner = document.getElementById("banner"), rail = document.getElementById("rail");
-  const route = document.getElementById("route"), done = document.getElementById("route-done"), rocket = document.getElementById("rocket"), strip = document.getElementById("strip");
+  const route = document.getElementById("route"), done = document.getElementById("route-done"), craft = document.getElementById("craft"), booster = document.getElementById("booster"), strip = document.getElementById("strip");
   const STOPS = [["top", "Launch"], ["work", "Projects"], ["builds", "Builds"], ["experience", "Experience"], ["skills", "Skills"], ["contact", "Contact"]]
     .filter(([id]) => { const el = document.getElementById(id); return el && el.offsetParent !== null; });
   const links = STOPS.map(([id, label]) => { const a = document.createElement("a"); a.href = "#" + id; a.textContent = label; route.append(a); return a; });
+  /* Flight plan: pad, boost, stage separation at 25%, space plane at 60%, satellite at 80%, operational at the top */
+  const ORDER = ["pad", "boost", "upper", "plane", "sat", "live"];
+  const stageAt = f => f < 0.005 ? "pad" : f < 0.25 ? "boost" : f < 0.6 ? "upper" : f < 0.8 ? "plane" : f < 0.985 ? "sat" : "live";
+  let stage = "pad";
   let marks = [];
   function place() {
     const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
     marks = STOPS.map(([id]) => Math.min(1, Math.max(0, (document.getElementById(id).getBoundingClientRect().top + scrollY - 120) / max)));
-    links.forEach((a, k) => a.style.top = (marks[k] * 100) + "%");
+    links.forEach((a, k) => a.style.top = ((1 - marks[k]) * 100) + "%");
   }
   function fly() {
     const max = Math.max(1, document.documentElement.scrollHeight - innerHeight), f = Math.min(1, scrollY / max);
-    done.style.height = rocket.style.top = (f * 100) + "%";
+    done.style.height = (f * 100) + "%";
+    craft.style.top = ((1 - f) * 100) + "%";
+    const st = stageAt(f);
+    if (st !== stage) {
+      /* the spent first stage falls away from wherever the separation happened */
+      if (ORDER.indexOf(st) >= 2 && ORDER.indexOf(stage) <= 1) { booster.style.top = craft.style.top; booster.classList.remove("drop"); void booster.offsetWidth; booster.classList.add("drop"); }
+      stage = st; craft.dataset.stage = st;
+    }
     strip.style.width = (f * 100) + "%";
     links.forEach((a, k) => a.classList.toggle("passed", f >= marks[k] - 0.002));
     rail.classList.toggle("show", scrollY > banner.offsetHeight * 0.6);
