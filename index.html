@@ -593,7 +593,8 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
    - size: "hero" (full width, largest), "big" (full width), "medium" (half), "small" (a third).
      Keep mediums in pairs and smalls in threes so rows stay full.
    - media: the first item is the card's cover photo unless cover is set. Add as many as you like.
-   - While a card is in view, its photos and videos cycle dimmed behind it (YouTube items are skipped). */
+   - While a card is in view, three of its clips cycle dimmed behind it: videos first, then photos if there are fewer
+     than three videos (YouTube items are skipped). */
 const PROJECTS = [
   {
     title: "Mining Water Delivery Vehicle", size: "hero", badge: "1st of 20 teams",
@@ -790,34 +791,40 @@ list.innerHTML = PROJECTS.map((p, i) => p.note ? `
 watchImages(list);
 
 /* ---------- Memories behind the project cards ----------
-   While a card is nearest the middle of the screen, its own photos and videos cycle in a vignetted panel about a
-   third of the window wide, set against the left or right edge (alternating by project), half behind the card.
-   Videos play muted to the end (up to 10 s), photos hold for 6 s. Files load only when they come up. */
+   The cards in the row nearest the middle of the screen each get a vignetted layer behind them, wider than the card so it
+   spills into the margins: shifted toward the side the card sits on (full-width cards alternate right and left).
+   Each memory cycles three of the project's own clips: videos first, topped up with photos only when there are fewer
+   than three videos. Videos play muted to the end (up to 10 s), photos hold for 6 s. Files load only when they come up. */
 (() => {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const wide = matchMedia("(min-width: 881px)");
   const isMp4 = src => /\.mp4$/i.test(src);
   const items = [...list.querySelectorAll("a.pcard[data-i]")].map(card => {
-    const p = PROJECTS[+card.dataset.i];
-    return { card, srcs: p.media.map(x => x[0]).filter(src => !isYT(src)), i: 0 };
+    const all = PROJECTS[+card.dataset.i].media.map(x => x[0]).filter(src => !isYT(src));
+    const vids = all.filter(isMp4), pics = all.filter(src => !isMp4(src));
+    return { card, srcs: (vids.length >= 3 ? vids : vids.concat(pics)).slice(0, 3), i: 0, timer: 0 };
   }).filter(m => m.srcs.length);
-  items.forEach((m, k) => {
-    m.side = k % 2 ? -1 : 1;
+  items.forEach(m => {
     m.el = document.createElement("div"); m.el.className = "memory"; m.el.setAttribute("aria-hidden", "true");
     list.prepend(m.el);
   });
   function layout() {
-    const minL = -list.getBoundingClientRect().left, vw = document.documentElement.clientWidth, extY = 80;
-    const w = Math.max(320, vw * 0.33);
+    const vw = document.documentElement.clientWidth, minL = -list.getBoundingClientRect().left, maxR = minL + vw;
+    const ext = Math.max(60, Math.min(300, (vw - list.offsetWidth) / 2 + 40)), extY = 110, mid = list.offsetWidth / 2;
+    let full = 0;
     items.forEach(m => {
-      const c = m.card, l = m.side > 0 ? minL + vw - w : minL;
-      m.el.style.setProperty("--fx", Math.round(w * 0.22) + "px"); m.el.style.setProperty("--fy", Math.round(extY * 0.9) + "px");
-      Object.assign(m.el.style, { left: l + "px", top: (c.offsetTop - extY) + "px", width: w + "px", height: (c.offsetHeight + extY * 2) + "px" });
+      const c = m.card, isFull = c.offsetWidth > list.offsetWidth * 0.9;
+      const side = isFull ? (full++ % 2 ? -1 : 1) : (c.offsetLeft + c.offsetWidth / 2 < mid ? -1 : 1);
+      const shift = side * ext * 0.2;
+      const l = Math.max(minL, c.offsetLeft - ext + shift), r = Math.min(maxR, c.offsetLeft + c.offsetWidth + ext + shift);
+      m.el.style.setProperty("--fx", Math.round(ext * 0.5) + "px"); m.el.style.setProperty("--fy", Math.round(extY * 0.7) + "px");
+      Object.assign(m.el.style, { left: l + "px", top: (c.offsetTop - extY) + "px", width: (r - l) + "px", height: (c.offsetHeight + extY * 2) + "px" });
     });
   }
-  let active = null, timer = 0, queued = false;
+  let active = [], queued = false;
+  const advance = m => { if (active.includes(m)) { m.i++; show(m); } };
   function show(m) {
-    clearTimeout(timer);
+    clearTimeout(m.timer);
     const src = m.srcs[m.i % m.srcs.length], vid = isMp4(src) && !RM;
     const el = document.createElement(vid ? "video" : "img");
     if (vid) {
@@ -825,17 +832,24 @@ watchImages(list);
       el.setAttribute("muted", ""); el.setAttribute("playsinline", "");
       el.poster = src.replace(/\.mp4$/i, ".jpg"); el.src = src;
     } else { el.src = isMp4(src) ? src.replace(/\.mp4$/i, ".jpg") : src; el.alt = ""; }
-    const next = () => { if (active === m) { m.i++; show(m); } };
     const old = [...m.el.children];
     m.el.append(el);
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
     old.forEach(o => { o.classList.remove("show"); setTimeout(() => o.remove(), 1300); });
     if (RM || m.srcs.length < 2) { if (vid) { el.loop = true; el.play().catch(() => {}); } return; }
-    if (vid) {
-      el.addEventListener("ended", next, { once: true });
-      el.play().catch(() => {});
-      timer = setTimeout(next, 10000);
-    } else timer = setTimeout(next, 6000);
+    if (vid) { el.addEventListener("ended", () => advance(m), { once: true }); el.play().catch(() => {}); m.timer = setTimeout(() => advance(m), 10000); }
+    else m.timer = setTimeout(() => advance(m), 6000);
+  }
+  function wake(m) {
+    m.el.classList.add("on");
+    const cur = m.el.querySelector(".show");
+    if (!cur) return show(m);
+    if (cur.tagName === "VIDEO") cur.play().catch(() => {});
+    if (!RM && m.srcs.length > 1) m.timer = setTimeout(() => advance(m), cur.tagName === "VIDEO" ? 8000 : 5000);
+  }
+  function sleep(m) {
+    clearTimeout(m.timer); m.el.classList.remove("on");
+    setTimeout(() => { if (!active.includes(m)) m.el.querySelectorAll("video").forEach(v => v.pause()); }, 1400);
   }
   function pick() {
     queued = false;
@@ -844,20 +858,12 @@ watchImages(list);
       const r = m.card.getBoundingClientRect(), d = Math.abs(r.top + r.height / 2 - innerHeight / 2);
       if (r.bottom > innerHeight * 0.15 && r.top < innerHeight * 0.85 && d < bestD) { best = m; bestD = d; }
     });
-    if (best === active) return;
-    clearTimeout(timer);
-    if (active) {
-      const old = active; old.el.classList.remove("on");
-      setTimeout(() => { if (active !== old) old.el.querySelectorAll("video").forEach(v => v.pause()); }, 1400);
-    }
-    active = best;
-    if (best) {
-      best.el.classList.add("on");
-      const cur = best.el.querySelector(".show");
-      if (cur && cur.tagName === "VIDEO") cur.play().catch(() => {});
-      if (!cur) show(best);
-      else if (!RM && best.srcs.length > 1) timer = setTimeout(() => { if (active === best) { best.i++; show(best); } }, cur.tagName === "VIDEO" ? 8000 : 5000);
-    }
+    /* every card in the same row as the nearest one plays together */
+    const next = best ? items.filter(m => Math.abs(m.card.offsetTop - best.card.offsetTop) < 4) : [];
+    if (next.length === active.length && next.every(m => active.includes(m))) return;
+    const prev = active; active = next;
+    prev.filter(m => !next.includes(m)).forEach(sleep);
+    next.filter(m => !prev.includes(m)).forEach(wake);
   }
   const queue = () => { if (!queued) { queued = true; requestAnimationFrame(pick); } };
   layout(); pick();
