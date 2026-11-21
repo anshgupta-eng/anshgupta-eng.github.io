@@ -5,11 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://anshgupta-eng.github.io/">
-<meta property="og:title" content="Ansh Gupta · Mechanical Engineering (Aerospace) Portfolio">
-<meta property="og:description" content="UBC Mechanical Engineering student, Aerospace Option. Projects, CAD, builds and contact.">
-<meta property="og:image" content="https://anshgupta-eng.github.io/images/mining-cover.jpg">
+<meta property="og:title" content="Ansh Gupta · Mechanical Engineering Portfolio">
+<meta property="og:description" content="UBC Mechanical Engineering student, Aerospace Option. Seeking a Summer 2027 co-op. Projects, CAD, builds and contact.">
+<meta property="og:image" content="https://anshgupta-eng.github.io/images/og-preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ansh Gupta's water delivery vehicle, which placed 1st of 20 teams">
 <meta name="twitter:card" content="summary_large_image">
-<title>Ansh Gupta Portfolio</title>
+<meta name="twitter:title" content="Ansh Gupta · Mechanical Engineering Portfolio">
+<meta name="twitter:image" content="https://anshgupta-eng.github.io/images/og-preview.jpg">
+<title>Ansh Gupta · Mechanical Engineering Portfolio</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%2307080a%27/%3E%3Ctext x=%2732%27 y=%2742%27 font-family=%27Arial,sans-serif%27 font-size=%2728%27 font-weight=%27700%27 fill=%27%23e8c25e%27 text-anchor=%27middle%27%3EAG%3C/text%3E%3C/svg%3E">
 <meta name="description" content="Ansh Gupta, Mechanical Engineering student (Aerospace Option) at UBC: projects, CAD, builds and contact.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -141,6 +146,7 @@ main.wrap, .banner-inner { position: relative; z-index: 2; }
 .portrait { width: 128px; aspect-ratio: 1; border-radius: 22px; border: 1px solid var(--line); margin-bottom: 1.5rem; }
 .portrait .ph { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em; color: var(--fg); }
 .status { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: var(--mute); margin: 0 0 0.9rem; }
+.status.seek { display: flex; margin-top: -0.5rem; padding-left: calc(7px + 0.6rem); }
 .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
 h1 { font-size: clamp(2.8rem, 7.5vw, 5rem); line-height: 1; font-weight: 700; letter-spacing: -0.04em; margin: 0 0 0.9rem; }
 .role { font-size: clamp(1.1rem, 2vw, 1.35rem); line-height: 1.45; font-weight: 500; letter-spacing: -0.01em; margin: 0; }
@@ -231,6 +237,8 @@ h3 { font-size: 1.25rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.
 .pcard.small .badge { font-size: 0.7rem; }
 /* Note: text-only card, not clickable */
 .pcard.note { grid-column: span 2; cursor: default; background: transparent; }
+.pcard.note.medium { grid-column: span 3; }
+.other-head { margin: 3rem 0 1.25rem; font-size: 1.25rem; }
 .pcard.note:hover { border-color: var(--line); transform: none; }
 .pcard.note .body { padding: 1.1rem 1.2rem 1.2rem; gap: 0.4rem; }
 .pcard.note h3 { font-size: 1.05rem; }
@@ -430,6 +438,7 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
       <!-- PORTRAIT: images/portrait.jpg (square; portrait-sm.jpg is a head-and-shoulders crop for the side rail circle) -->
       <figure class="media portrait"><img src="images/portrait.jpg" alt="Portrait of Ansh Gupta"><figcaption class="ph">AG</figcaption></figure>
       <p class="status"><i aria-hidden="true"></i>Open to aerospace &amp; mechanical co-op roles</p>
+      <p class="status seek">Seeking a Summer 2027 co-op · May–Aug · 16 weeks</p>
       <h1>Ansh Gupta</h1>
       <p class="role">Mechanical Engineering student, Aerospace Option, at UBC.</p>
     </div>
@@ -468,6 +477,8 @@ kbd { font: 400 0.72rem/1 var(--f-mono); color: var(--fg); border: 1px solid var
       <p>Open any project for photos, CAD and the full story.</p>
     </div>
     <div class="projects" id="project-list"></div>
+    <h3 class="other-head" id="other-h">Other projects</h3>
+    <div class="projects" id="other-list" aria-labelledby="other-h"></div>
   </section>
 
   <section id="builds" aria-labelledby="builds-h">
@@ -647,9 +658,9 @@ const PROJECTS = [
     ]
   },
   {
-    title: "Raspberry Pi Battle Bot", size: "medium",
+    title: "Voice-Controlled Raspberry Pi Robot", size: "big",
     context: "Personal project", dates: "Apr – Jun 2024",
-    hook: "A voice-controlled Raspberry Pi robot that performs headbutt, scratch and spin manoeuvres on command.",
+    hook: "A Raspberry Pi robot that runs motor- and servo-actuated movement sequences on spoken commands, using speech recognition in Python.",
     challenge: "Build a robot that responds to spoken commands with choreographed movements, using a Raspberry Pi and 3D-printed parts.",
     bullets: [
       "Integrated a Raspberry Pi with DC motors, servos and a 3D-printed chassis.",
@@ -659,7 +670,7 @@ const PROJECTS = [
     result: "A working robot that executes full movement sequences from voice commands.",
     tags: "Raspberry Pi · Python · Linux · Servos · 3D printing",
     media: [
-      ["images/battlebot-cover.jpg", "The finished battle bot", "50% 40%"],
+      ["images/battlebot-cover.jpg", "The finished robot", "50% 40%"],
       ["yt:HjbLIFoOzLo", "Full demo with sound: the robot responding to voice commands"],
       ["images/battlebot-taco.mp4", "Taking on a plush taco"],
       ["images/battlebot-headbutt.mp4", "Headbutt"],
@@ -668,8 +679,29 @@ const PROJECTS = [
     ],
     link: ["https://www.youtube.com/watch?v=HjbLIFoOzLo", "Watch it respond to voice commands on YouTube"]
   },
+  /* Notes: small text-only cards (no photos or pop-up), for what each project taught me */
   {
-    title: "Speed Wheel Raceway", size: "medium", live: "game", badge: "Playable",
+    title: "Train Headlight Fixture", note: true, size: "medium", badge: "Co-op",
+    context: "AtkinsRéalis · Canada Line", dates: "2026",
+    points: [
+      "Designed a production headlight fixture from concept in CATIA V5 for the in-service Canada Line fleet.",
+      "Defined measurements, installation requirements and reference dimensions for fit on the vehicle.",
+      "Researched weld specifications and applied ISO weld symbols to the engineering drawings.",
+      "Coordinated sourcing and manufacture of the fixture with procurement."
+    ]
+  },
+  {
+    title: "Remote-Controlled Scooter", note: true, size: "medium",
+    context: "UBC · Team course project", dates: "Feb – Apr 2025",
+    points: [
+      "Worked in the electromechanical subteam, one of four, on the motor system and wireless remote.",
+      "Built the remote from two push buttons and a direction switch: left, right, both for forward, with the switch selecting forward or reverse.",
+      "Programmed two Arduinos to encode the remote's state, send it over an RF transmitter–receiver pair across the room and drive the motors.",
+      "Powered both circuits from battery packs with a single on/off switch."
+    ]
+  },
+  {
+    title: "Speed Wheel Raceway", size: "medium", group: "other", live: "game", badge: "Playable",
     context: "Programming 11 · High school", dates: "Mar – Jun 2023",
     hook: "A puzzle platformer with a gravity-flip mechanic and a three-phase boss, written from scratch in Python. Playable in the browser.",
     challenge: "An open-ended, self-directed project with no restrictions on what to build. I chose a platformer themed around my interest in cars, and developed it in Python's SimpleGUI library without a game engine.",
@@ -689,29 +721,8 @@ const PROJECTS = [
       ["images/speedwheel-home.jpg", "Inside home, where the Speed Wheel double jump is found"]
     ]
   },
-  /* Notes: small text-only cards (no photos or pop-up), for what each project taught me */
   {
-    title: "Train Headlight Fixture", note: true, badge: "Co-op",
-    context: "AtkinsRéalis · Canada Line", dates: "2026",
-    points: [
-      "Designed a production headlight fixture from concept in CATIA V5 for the in-service Canada Line fleet.",
-      "Defined measurements, installation requirements and reference dimensions for fit on the vehicle.",
-      "Researched weld specifications and applied ISO weld symbols to the engineering drawings.",
-      "Coordinated sourcing and manufacture of the fixture with procurement."
-    ]
-  },
-  {
-    title: "Remote-Controlled Scooter", note: true,
-    context: "UBC · Team course project", dates: "Feb – Apr 2025",
-    points: [
-      "Worked in the electromechanical subteam, one of four, on the motor system and wireless remote.",
-      "Built the remote from two push buttons and a direction switch: left, right, both for forward, with the switch selecting forward or reverse.",
-      "Programmed two Arduinos to encode the remote's state, send it over an RF transmitter–receiver pair across the room and drive the motors.",
-      "Powered both circuits from battery packs with a single on/off switch."
-    ]
-  },
-  {
-    title: "3D-Printed Parts", note: true,
+    title: "3D-Printed Parts", note: true, size: "medium", group: "other",
     context: "Personal · Ongoing", dates: "2023 – Present",
     points: [
       "Tune FDM slicer parameters (orientation, infill, walls, supports) to meet fit, strength and finish requirements.",
@@ -726,7 +737,7 @@ const PROJECTS = [
    ["images/gallery-1.jpg", "Competition day with the water delivery vehicle", "tall"],
    ["images/gallery-2.jpg", "Gearbox assembly in SolidWorks", "wide"],
    ["images/gallery-3.jpg", "Mid-print on the 3D printer", ""],
-   ["images/gallery-4.jpg", "Wiring the battle bot", ""],
+   ["images/gallery-4.jpg", "Wiring the Raspberry Pi robot", ""],
    ["images/gallery-5.jpg", "Machining in the UBC shop", "wide"],
    ["images/gallery-6.jpg", "Skipping at a curling bonspiel", ""] */
 const GALLERY = [];
@@ -751,7 +762,7 @@ function media(src, caption, pos, play) {
   const ph = `<figcaption class="ph">${CAM}<span>${esc(caption)}</span><code>${esc(src)}</code></figcaption>`;
   const sound = pos === "sound"; if (sound) pos = null;
   const at = pos ? ` style="object-position:${esc(pos)}"` : "";
-  if (isVid(src) && play) return `<figure class="media"><video src="${esc(src)}" poster="${esc(src.replace(/\.mp4$/i, ".jpg"))}" autoplay muted loop playsinline disablepictureinpicture${sound ? " controls" : ""} aria-label="${esc(caption)}"></video>${ph}</figure>`;
+  if (isVid(src) && play) return `<figure class="media"><video src="${esc(src)}" poster="${esc(src.replace(/\.mp4$/i, ".jpg"))}" preload="metadata" autoplay muted loop playsinline disablepictureinpicture${sound ? " controls" : ""} aria-label="${esc(caption)}"></video>${ph}</figure>`;
   const img = `<img src="${esc(isVid(src) ? src.replace(/\.mp4$/i, ".jpg") : src)}" alt="${esc(caption)}" loading="lazy"${at}>`;
   return `<figure class="media">${img}${isVid(src) ? '<span class="play" aria-hidden="true"></span>' : ""}${ph}</figure>`;
 }
@@ -769,8 +780,8 @@ function watchImages(root) {
 }
 
 const list = document.getElementById("project-list");
-list.innerHTML = PROJECTS.map((p, i) => p.note ? `
-  <article class="pcard note">
+const cardHTML = (p, i) => p.note ? `
+  <article class="pcard note ${p.size || ""}">
     <div class="body">
       <span class="meta">${esc(p.context)} · ${esc(p.dates)}</span>
       <h3>${esc(p.title)}</h3>
@@ -787,7 +798,11 @@ list.innerHTML = PROJECTS.map((p, i) => p.note ? `
       <p>${esc(p.hook)}</p>
       <span class="more">View project</span>
     </div>
-  </a>`).join("");
+  </a>`;
+list.innerHTML = PROJECTS.map((p, i) => p.group ? "" : cardHTML(p, i)).join("");
+const otherList = document.getElementById("other-list");
+otherList.innerHTML = PROJECTS.map((p, i) => p.group === "other" ? cardHTML(p, i) : "").join("");
+watchImages(otherList);
 watchImages(list);
 
 /* ---------- Memories behind the project cards ----------
@@ -2047,7 +2062,7 @@ function showDialog() {
 }
 dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
 dlg.addEventListener("close", () => { if (activeSim) { activeSim.destroy(); activeSim = null; } });
-list.addEventListener("click", e => { const c = e.target.closest("a.pcard"); if (c) { e.preventDefault(); openProject(+c.dataset.i); } });
+[list, otherList].forEach(l => l.addEventListener("click", e => { const c = e.target.closest("a.pcard"); if (c) { e.preventDefault(); openProject(+c.dataset.i); } }));
 gal.addEventListener("click", e => { const t = e.target.closest(".tile"); if (t) { e.preventDefault(); openPhoto(+t.dataset.g); } });
 
 /* ---------- Route rocket and contact rail ---------- */
